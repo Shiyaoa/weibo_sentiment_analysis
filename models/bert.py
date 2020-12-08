@@ -54,11 +54,32 @@ class Model(nn.Module):
         for param in self.bert.parameters():
             param.requires_grad = True
         self.fc = nn.Linear(config.hidden_size, config.num_classes)
+        
+        self.weight_W = nn.Parameter(torch.rand(config.hidden_size , config.hidden_size))
+        self.weight_proj = nn.Parameter(torch.rand(config.hidden_size, 1))
 
     def forward(self, x):
         content = x[0]
         label = x[1]
         mask = x[2]
         _, pooled = self.bert(content, attention_mask=mask, output_all_encoded_layers=False)
-        out = self.fc(pooled)
+        #_=[batch_size, sequence_length, hidden_size]
+        #pooled=[batch_size, hidden_size]  
+        #pooled is Last layer hidden-state of the first token ('CLS') of the sequence,it maybe "context vector"
+        
+        ####below is a kind of self attention
+        u = torch.tanh(torch.matmul(_, self.weight_W))
+        #u=[batch_size, sequence_length, hidden_size]
+        att = torch.matmul(u, self.weight_proj)
+        #att=[batch_size, sequence_length,1]
+        att_score = F.softmax(att, dim=1)
+        #att_score=[batch_size, sequence_length,1],which sum by {seq_len}=1
+        scored_x = _ * att_score
+        #scored_x=[batch_size, sequence_length,hidden_size]
+        #####attention_weighted_x
+        
+        scored_x = torch.sum(scored_x, dim=1)
+        #out = self.fc(pooled)
+        out=self.fc(scored_x)
+        
         return out
