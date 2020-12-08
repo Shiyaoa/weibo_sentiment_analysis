@@ -1,6 +1,7 @@
 # coding: UTF-8
 import time
 import torch
+import math
 import argparse
 from importlib import import_module
 from loadDataset import loadDataset, cost_Time, list2iter
@@ -12,14 +13,23 @@ args = parser.parse_args()
 PAD, CLS = '[PAD]', '[CLS]'
 
 
+def softmax(matrix):
+    m_exp = [math.exp(i) for i in matrix]
+    sum_m_exp = sum(m_exp)
+    norm = [round(i / sum_m_exp, 3) for i in m_exp]
+    return norm
+
 def evaluate(model, content):
     model.eval()
     with torch.no_grad():
-      for text, label in content:
+      for text, device in content:
         outputs = model(text)
         predict = torch.max(outputs.data, 1)[1].cpu().numpy()
-    print("Predict List: ", outputs)
-    print("Predict Label:", predict)
+    pred_list = softmax(outputs[0])
+    dict = {}
+    for i in range(0, config.num_classes):
+        dict[labels[i][1]] = pred_list[i]
+    return dict
 
 
 def loadData(config, sentence, pad_size=32):
@@ -51,15 +61,15 @@ if __name__ == '__main__':
     model_path = import_module('models.' + model_name)
     config = model_path.Config('dataset')
 
+    labels = [x.split(' ') for x in config.class_list]
+    start_time = time.time()
     # 使用训练好的模型
     model = model_path.Model(config).to(config.device)
     model.load_state_dict(torch.load(config.save_model_path), False)
-
+    print("Cost Time: ", cost_Time(start_time))
     # 预测
     start_time = time.time()
     contentList = loadData(config, sentence)
     contentIter = list2iter(contentList, config)
-    evaluate(model, contentIter)
+    print(evaluate(model, contentIter))
     print("Cost Time: ", cost_Time(start_time))
-
-
