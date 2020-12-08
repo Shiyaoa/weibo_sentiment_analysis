@@ -85,7 +85,7 @@ class BertTokenizer(object):
           do_basic_tokenize: Whether to do basic tokenization before wordpiece.
           max_len: An artificial maximum length to truncate tokenized sequences to;
                          Effective maximum length is always the minimum of this
-                         value (if specified) and the underlying BERT model's
+                         value (if specified) and the underlying BERT models's
                          sequence length.
           never_split: List of tokens which will never be split during tokenization.
                          Only has an effect when do_wordpiece_only=False
@@ -93,7 +93,7 @@ class BertTokenizer(object):
         if not os.path.isfile(vocab_file):
             raise ValueError(
                 "Can't find a vocabulary file at path '{}'. To load the vocabulary from a Google pretrained "
-                "model use `tokenizer = BertTokenizer.from_pretrained(PRETRAINED_MODEL_NAME)`".format(vocab_file))
+                "models use `tokenizer = BertTokenizer.from_pretrained(PRETRAINED_MODEL_NAME)`".format(vocab_file))
         self.vocab = load_vocab(vocab_file)
         self.ids_to_tokens = collections.OrderedDict(
             [(ids, tok) for tok, ids in self.vocab.items()])
@@ -122,7 +122,7 @@ class BertTokenizer(object):
         if len(ids) > self.max_len:
             logger.warning(
                 "Token indices sequence length is longer than the specified maximum "
-                " sequence length for this BERT model ({} > {}). Running this"
+                " sequence length for this BERT models ({} > {}). Running this"
                 " sequence through BERT will result in indexing errors".format(len(ids), self.max_len)
             )
         return ids
@@ -152,18 +152,18 @@ class BertTokenizer(object):
     @classmethod
     def from_pretrained(cls, pretrained_model_name_or_path, cache_dir=None, *inputs, **kwargs):
         """
-        Instantiate a PreTrainedBertModel from a pre-trained model file.
-        Download and cache the pre-trained model file if needed.
+        Instantiate a PreTrainedBertModel from a pre-trained models file.
+        Download and cache the pre-trained models file if needed.
         """
         if pretrained_model_name_or_path in PRETRAINED_VOCAB_ARCHIVE_MAP:
             vocab_file = PRETRAINED_VOCAB_ARCHIVE_MAP[pretrained_model_name_or_path]
             if '-cased' in pretrained_model_name_or_path and kwargs.get('do_lower_case', True):
-                logger.warning("The pre-trained model you are loading is a cased model but you have not set "
+                logger.warning("The pre-trained models you are loading is a cased models but you have not set "
                                "`do_lower_case` to False. We are setting `do_lower_case=False` for you but "
                                "you may want to check this behavior.")
                 kwargs['do_lower_case'] = False
             elif '-cased' not in pretrained_model_name_or_path and not kwargs.get('do_lower_case', True):
-                logger.warning("The pre-trained model you are loading is an uncased model but you have set "
+                logger.warning("The pre-trained models you are loading is an uncased models but you have set "
                                "`do_lower_case` to False. We are setting `do_lower_case=True` for you "
                                "but you may want to check this behavior.")
                 kwargs['do_lower_case'] = True
@@ -176,7 +176,7 @@ class BertTokenizer(object):
             resolved_vocab_file = cached_path(vocab_file, cache_dir=cache_dir)
         except EnvironmentError:
             logger.error(
-                "Model name '{}' was not found in model name list ({}). "
+                "Model name '{}' was not found in models name list ({}). "
                 "We assumed '{}' was a path or url but couldn't find any file "
                 "associated to this path or url.".format(
                     pretrained_model_name_or_path,
@@ -189,7 +189,7 @@ class BertTokenizer(object):
             logger.info("loading vocabulary file {} from cache at {}".format(
                 vocab_file, resolved_vocab_file))
         if pretrained_model_name_or_path in PRETRAINED_VOCAB_POSITIONAL_EMBEDDINGS_SIZE_MAP:
-            # if we're using a pretrained model, ensure the tokenizer wont index sequences longer
+            # if we're using a pretrained models, ensure the tokenizer wont index sequences longer
             # than the number of positional embeddings
             max_len = PRETRAINED_VOCAB_POSITIONAL_EMBEDDINGS_SIZE_MAP[pretrained_model_name_or_path]
             kwargs['max_len'] = min(kwargs.get('max_len', int(1e12)), max_len)
