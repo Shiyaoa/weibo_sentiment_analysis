@@ -23,13 +23,14 @@ class SelfAttention(nn.Module):
         outputs = (encoder_outputs * weights.unsqueeze(-1)).sum(dim=1)
         return outputs, weights
 
+
 class Config(object):
     def __init__(self, dataDir):
         self.model_name = 'bert'  # 模型名称
         self.train_data = dataDir + '/train.txt'  # 训练集
         self.dev_data = dataDir + '/dev.txt'  # 验证集
         self.text_data = dataDir + '/test.txt'  # 测试集
-        self.class_list = [x.strip() for x in open(dataDir + '/class.txt').readlines()]   # label类别（几分类）
+        self.class_list = [x.strip() for x in open(dataDir + '/class.txt').readlines()]  # label类别（几分类）
         self.save_model_path = 'trainedModel/' + self.model_name + '.pkl'  # 存储训练好的模型
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  # 设备使用
 
@@ -38,7 +39,7 @@ class Config(object):
         self.batch_size = 128  # mini-batch的大小
         self.hidden_size = 768  # 隐层大小
         self.learning_rate = 5e-5  # 学习率
-        self.num_epochs = 3  # epoch数
+        self.num_epochs = 5  # epoch数
         self.require_improve = 1000  # 若超过1000 batch仍无提升，则提前结束
 
         self.bert_SourceCode_path = './bert_SourceCode'  # bert源码
@@ -54,8 +55,8 @@ class Model(nn.Module):
         for param in self.bert.parameters():
             param.requires_grad = True
         self.fc = nn.Linear(config.hidden_size, config.num_classes)
-        
-        self.weight_W = nn.Parameter(torch.rand(config.hidden_size , config.hidden_size))
+
+        self.weight_W = nn.Parameter(torch.rand(config.hidden_size, config.hidden_size))
         self.weight_proj = nn.Parameter(torch.rand(config.hidden_size, 1))
 
     def forward(self, x):
@@ -63,23 +64,23 @@ class Model(nn.Module):
         label = x[1]
         mask = x[2]
         _, pooled = self.bert(content, attention_mask=mask, output_all_encoded_layers=False)
-        #_=[batch_size, sequence_length, hidden_size]
-        #pooled=[batch_size, hidden_size]  
-        #pooled is Last layer hidden-state of the first token ('CLS') of the sequence,it maybe "context vector"
-        
+        # _=[batch_size, sequence_length, hidden_size]
+        # pooled=[batch_size, hidden_size]
+        # pooled is Last layer hidden-state of the first token ('CLS') of the sequence,it maybe "context vector"
+
         ####below is a kind of self attention
         u = torch.tanh(torch.matmul(_, self.weight_W))
-        #u=[batch_size, sequence_length, hidden_size]
+        # u=[batch_size, sequence_length, hidden_size]
         att = torch.matmul(u, self.weight_proj)
-        #att=[batch_size, sequence_length,1]
+        # att=[batch_size, sequence_length,1]
         att_score = F.softmax(att, dim=1)
-        #att_score=[batch_size, sequence_length,1],which sum by {seq_len}=1
+        # att_score=[batch_size, sequence_length,1],which sum by {seq_len}=1
         scored_x = _ * att_score
-        #scored_x=[batch_size, sequence_length,hidden_size]
+        # scored_x=[batch_size, sequence_length,hidden_size]
         #####attention_weighted_x
-        
+
         scored_x = torch.sum(scored_x, dim=1)
-        #out = self.fc(pooled)
-        out=self.fc(scored_x)
-        
-        return out
+        # out = self.fc(pooled)
+        out = self.fc(scored_x)
+
+        return out, att_score

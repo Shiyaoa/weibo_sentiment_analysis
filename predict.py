@@ -19,17 +19,22 @@ def softmax(matrix):
     norm = [round(i / sum_m_exp, 3) for i in m_exp]
     return norm
 
-def evaluate(model, content):
+def evaluate(model, content, sentence):
     model.eval()
     with torch.no_grad():
       for text, device in content:
-        outputs = model(text)
+        outputs, att_score = model(text)
         predict = torch.max(outputs.data, 1)[1].cpu().numpy()
+    att_dict = {}
+    att_list = att_score[0].cpu().numpy().tolist()
+    for i in range(1, len(sentence)):
+      att_dict[sentence[i-1]] = round(att_list[i][0], 4)
+    print(att_dict)
     pred_list = softmax(outputs[0])
     dict = {}
     for i in range(0, config.num_classes):
-        dict[labels[i][1]] = pred_list[i]
-    return dict
+      dict[labels[i][1]] = pred_list[i]
+    print(dict)
 
 
 def loadData(config, sentence, pad_size=32):
@@ -71,5 +76,7 @@ if __name__ == '__main__':
     start_time = time.time()
     contentList = loadData(config, sentence)
     contentIter = list2iter(contentList, config)
-    print(evaluate(model, contentIter))
+    evaluate(model, contentIter, sentence)
     print("Cost Time: ", cost_Time(start_time))
+
+

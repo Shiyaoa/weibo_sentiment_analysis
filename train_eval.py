@@ -1,5 +1,6 @@
 import time
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 from sklearn import metrics
@@ -7,7 +8,6 @@ from loadDataset import cost_Time
 from bert_SourceCode.optimization import BertAdam
 
 
-# 模型训练
 def train(config, model, train_iter, dev_iter):
     start_time = time.time()
     model.train()
@@ -28,7 +28,7 @@ def train(config, model, train_iter, dev_iter):
     for epoch in range(config.num_epochs):
         print('Epoch [{}/{}]'.format(epoch + 1, config.num_epochs))
         for i, (contents, labels) in enumerate(train_iter):
-            outputs = model(contents)
+            outputs, attention = model(contents)
             model.zero_grad()
             loss = F.cross_entropy(outputs, labels)
             loss.backward()
@@ -58,7 +58,6 @@ def train(config, model, train_iter, dev_iter):
             break
 
 
-# 模型评估
 def evaluate(config, model, data_iter, test=False):
     model.eval()
     loss_total = 0
@@ -66,7 +65,7 @@ def evaluate(config, model, data_iter, test=False):
     predicts_all = np.array([], dtype=int)
     with torch.no_grad():
         for contents, labels in data_iter:
-            outputs = model(contents)
+            outputs, attention = model(contents)
             loss = F.cross_entropy(outputs, labels)
             loss_total += loss
             labels = labels.data.cpu().numpy()
@@ -82,7 +81,6 @@ def evaluate(config, model, data_iter, test=False):
     return acc, avg_loss
 
 
-# 模型测试
 def test(config, model, data_iter):
     model.load_state_dict(torch.load(config.save_model_path))
     model.eval()
@@ -95,6 +93,8 @@ def test(config, model, data_iter):
     print("Confusion Matrix ...")
     print(confusion)
     print("Cost Time:", cost_Time(start_time))
+
+
 
 
 
