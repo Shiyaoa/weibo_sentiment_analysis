@@ -27,7 +27,7 @@ def evaluate(model, content, sentence):
         predict = torch.max(outputs.data, 1)[1].cpu().numpy()
     att_dict = {}
     att_list = att_score[0].cpu().numpy().tolist()
-    for i in range(1, len(sentence)):
+    for i in range(1, len(sentence)+1):
       att_dict[sentence[i-1]] = round(att_list[i][0], 4)
     print(att_dict)
     pred_list = softmax(outputs[0])
