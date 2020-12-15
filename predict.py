@@ -19,17 +19,29 @@ def softmax(matrix):
     norm = [round(i / sum_m_exp, 3) for i in m_exp]
     return norm
 
+
 def evaluate(model, content, sentence):
     model.eval()
     with torch.no_grad():
       for text, device in content:
         outputs, att_score = model(text)
         predict = torch.max(outputs.data, 1)[1].cpu().numpy()
-    att_dict = {}
-    att_list = att_score[0].cpu().numpy().tolist()
-    for i in range(1, len(sentence)+1):
-      att_dict[sentence[i-1]] = round(att_list[i][0], 4)
-    print(att_dict)
+    pos_att = {}
+    pos_word = {}
+    attention_list = att_score[0].cpu().numpy().tolist()
+    i = 0
+    att_list = [l[0] for l in attention_list]
+
+    att_list = att_list[1:len(sentence)+1]
+    att_list = softmax(att_list)
+    for i in range(0, len(sentence)):
+      pos_att[i] = sentence[i]
+
+    for i in range(0, len(sentence)):
+      pos_word[i] = round(att_list[i], 4)
+
+    print(pos_att)
+    print(pos_word)
     pred_list = softmax(outputs[0])
     dict = {}
     for i in range(0, config.num_classes):
