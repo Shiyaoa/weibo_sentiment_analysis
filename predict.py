@@ -3,6 +3,7 @@ import time
 import torch
 import math
 import argparse
+import numpy as np
 from importlib import import_module
 from loadDataset import loadDataset, cost_Time, list2iter
 
@@ -19,8 +20,21 @@ def softmax(matrix):
     norm = [round(i / sum_m_exp, 3) for i in m_exp]
     return norm
 
+def min_max(arr):
+    norm = []
+    i = 0
+    for x in arr:
+      x = float(x - np.min(arr))/(np.max(arr)- np.min(arr))
+      norm.append(x*x)
+    return norm
+
+def getlog(arr):
+  norm = [math.log(num+(1e-30)) for num in arr]
+  return norm
 
 def evaluate(model, content, sentence):
+    if len(sentence) > 30:
+      sentence = sentence[:30]
     model.eval()
     with torch.no_grad():
       for text, device in content:
@@ -31,9 +45,8 @@ def evaluate(model, content, sentence):
     attention_list = att_score[0].cpu().numpy().tolist()
     i = 0
     att_list = [l[0] for l in attention_list]
-
     att_list = att_list[1:len(sentence)+1]
-    att_list = softmax(att_list)
+    att_list = min_max(getlog(att_list))
     for i in range(0, len(sentence)):
       pos_att[i] = sentence[i]
 
